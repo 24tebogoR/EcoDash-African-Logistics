@@ -28,5 +28,18 @@ Mathematics and Physics has been used to simulate how the AquaLink vehicle moves
    This gradually reduces the vehicles velocity.
 
 4. Battery Consumption
-    
+    The electric vehicle consumes battery energy while moving: if ( this.velocityX !== 0 || this.velocityY !== 0) {
+      this.battery -= 0.03; This creates an energy management element in the simulation.
+
+5. Solar Energy Recharge
+   The vehicle can recharge when it enters the Solar Energy Grid/area. The simulation uses rectangle overlap calculations to determine whether
+   the vehicle has entered the solar area. When the overlap is detected, the battery increases according to the solar recharge rate.
+   This represents the use of renewable energy to support an electric water-delivery vehicle.
+
+6. Collisions Calculations
+   AquaLink uses collision detection to detect when the vehicle interacts with the environmental obstacles.
+   The vehicle and each obstacle have: An X position, A y position, a width and height.
+   The simulation compares these values to determine whether the rectangle areas overlap.
+   Different obstacles then affect the vehicle differently: a pothole reduces speed speed, a fallen tree can block the route and
+   a river reduces vehicle movement.
 
