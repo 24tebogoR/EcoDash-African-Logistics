@@ -9,34 +9,34 @@ The project therefore connects three real-world ideas: rural water delivery, tra
 # Mathematical and Physics Model
 Mathematics and Physics has been used to simulate how the AquaLink vehicle moves and responds to its enviroment.
 
-1. Vehicle Speed and Velocity - horizontal and vertical velocity
+1. # Vehicle Speed and Velocity - horizontal and vertical velocity
    this.velocityX = 0;
    this.velocityY = 0;
    Furthermore, its position is updated using its velocity, this allows the vehicle to move across the enviroment.
    this.x += this.velocityX;
    this.y += velocityY;
 
-2. Trigonometry and Direction
+2. # Trigonometry and Direction
    Math.cos() - calculates the horizontal component of the vehicles movement
    Math.sin() - calculates the vertical component of the vehicles movement
    The vehicles direction is represented using an angle. This allows the simulation to connect the vehicles direction with its movement across the canvas.
 
-3. Friction
+3. # Friction
    The simulation applies frictio to the vehicle's velocity:
    this.velocityX *= 0.98;
    this.velocityY *= 0.98;
    This gradually reduces the vehicles velocity.
 
-4. Battery Consumption
+4. # Battery Consumption
     The electric vehicle consumes battery energy while moving: if ( this.velocityX !== 0 || this.velocityY !== 0) {
       this.battery -= 0.03; This creates an energy management element in the simulation.
 
-5. Solar Energy Recharge
+5. # Solar Energy Recharge
    The vehicle can recharge when it enters the Solar Energy Grid/area. The simulation uses rectangle overlap calculations to determine whether
    the vehicle has entered the solar area. When the overlap is detected, the battery increases according to the solar recharge rate.
    This represents the use of renewable energy to support an electric water-delivery vehicle.
 
-6. Collisions Calculations
+6. # Collisions Calculations
    AquaLink uses collision detection to detect when the vehicle interacts with the environmental obstacles.
    The vehicle and each obstacle have: An X position, A y position, a width and height.
    The simulation compares these values to determine whether the rectangle areas overlap.
