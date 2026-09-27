@@ -56,22 +56,96 @@ class WaterVehicle {
   }
 
   // draw the water vehicle
-  draw() {
-    ctx.fillStyle = this.color;
+   draw() {
 
-    ctx.fillRect(this.x, this.y, this.width, this.height);
+      // Main vehicle body
+      ctx.fillStyle = this.color;
 
-    // draw water tank
-    ctx.fillStyle = "blue";
+      ctx.fillRect(
+        this.x,
+        this.y,
+        this.width,
+        this.height
+      );
 
-    ctx.fillRect(this.x + 15, this.y - 12, 30, 12);
+      // Water tank
+      ctx.fillStyle = "#90e0ef";
 
-    // draw front of vehicle
-    ctx.fillStyle = "gray";
+      ctx.fillRect(
+        this.x + 5,
+        this.y + 4,
+        35,
+        23
+      );
 
-    ctx.fillRect(this.x + this.width - 5, this.y + 5, 5, 15);
-  }
+      // Water tank outline
+      ctx.strokeStyle = "#0077b6";
 
+      ctx.strokeRect(
+        this.x + 5,
+        this.y + 4,
+        35,
+        23
+      );
+
+      // Driver section
+      ctx.fillStyle = "#023e8a";
+
+      ctx.fillRect(
+        this.x + 42,
+        this.y + 5,
+        16,
+        22
+      );
+
+      // vehicle window
+      ctx.fillStyle = "#caf0f8";
+
+      ctx.fillRect(
+        this.x + 46,
+        this.y + 8,
+        9,
+        8
+      );
+
+      // Front of vehicle
+      ctx.fillStyle = "gray";
+
+      ctx.fillRect(
+        this.x + this.width - 3,
+        this.y + 8,
+        3,
+        17
+      );
+
+     // vehicle wheel
+      ctx.fillStyle = "#222222";
+
+      ctx.beginPath();
+
+      ctx.arc(
+        this.x + 13,
+        this.y + this.height,
+        5,
+        0,
+        Math.PI * 2
+      );
+
+      ctx.fill();
+
+      // Front wheel
+      ctx.beginPath();
+
+      ctx.arc(
+        this.x + 49,
+        this.y + this.height,
+        5,
+        0,
+        Math.PI * 2
+      );
+
+      ctx.fill();
+    }
   // draw battery
   drawBattery() {
     ctx.fillStyle = "black";
