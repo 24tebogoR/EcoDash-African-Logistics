@@ -1,5 +1,4 @@
 <!doctype html>
-
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -12,48 +11,142 @@
   </head>
 
   <body>
-//creatw header sec
+    <!-- Header -->
     <header>
-      <h1>AquaLink</h1>
+      <div class="logo">AquaLink</div>
 
       <p>Rural Water Delivery Simulator</p>
     </header>
 
-    <section class="AQintro">
-      <h2>Water Delivery Mission</h2>
-
-      <p>
-        AquaLink is a JavaScript simulation that represents water delivery in a
-        rural South African environment.
-      </p>
-    </section>
-
+    <!-- Main Content -->
     <main>
-      <div class="container">
-        <canvas></canvas>
-      </div>
+      <section class="intro">
+        <h1>AquaLink</h1>
 
-   //create music
+        <h2>Delivering Water. Connecting Communities.</h2>
 
-      <section class="audio-controls">
+        <p>
+          Navigate a rural South African environment and deliver water while
+          managing battery energy and road conditions.
+        </p>
+      </section>
+
+      <!-- Game Section -->
+      <section class="simulation-container">
+        <div class="simulation-heading">
+          <h2>Water Delivery Simulation</h2>
+
+          <p>Use the arrow keys to control the AquaLink vehicle.</p>
+        </div>
+
+        <!-- Game Controls -->
+        <div class="game-controls">
+          <button id="startButton" onclick="startGame()">START GAME</button>
+
+          <button id="pauseButton" onclick="pauseGame()" style="display: none">
+            PAUSE
+          </button>
+
+          <button
+            id="restartButton"
+            onclick="restartGame()"
+            style="display: none"
+          >
+            RESTART
+          </button>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas">
+          <canvas id="gameCanvas" width="900" height="500"> </canvas>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions">
+          <h3>Controls</h3>
+
+          <div class="control-grid">
+            <div class="control-box">
+              <strong>↑</strong>
+              <span>Move Up</span>
+            </div>
+
+            <div class="control-box">
+              <strong>↓</strong>
+              <span>Move Down</span>
+            </div>
+
+            <div class="control-box">
+              <strong>←</strong>
+              <span>Move Left</span>
+            </div>
+
+            <div class="control-box">
+              <strong>→</strong>
+              <span>Move Right</span>
+            </div>
+          </div>
+
+          <p>
+            Avoid obstacles, manage your battery and use the Solar Energy Grid
+            to recharge.
+          </p>
+        </div>
+      </section>
+
+      <!-- Environment Info -->
+      <section class="environment-info">
+        <div class="info-card">
+          <h3>Water Delivery</h3>
+
+          <p>
+            AquaLink simulates the delivery of water to rural communities using
+            an electric vehicle.
+          </p>
+        </div>
+
+        <div class="info-card">
+          <h3>Solar Energy</h3>
+
+          <p>
+            Solar infrastructure provides an opportunity to recharge the vehicle
+            during the journey.
+          </p>
+        </div>
+
+        <div class="info-card">
+          <h3>Rural Roads</h3>
+
+          <p>
+            Different road conditions create challenges for the water-delivery
+            vehicle.
+          </p>
+        </div>
+      </section>
+
+      <!-- Audio Sec -->
+      <section class="audio-section">
         <h2>Simulation Audio</h2>
 
-        <button onclick="playMusic()">Play Music</button>
+        <p>Use the button below to start the background music.</p>
+
+        <button class="audio-button" onclick="playMusic()">▶ Play Music</button>
       </section>
     </main>
 
-    //music
+    <!-- Footer -->
+    <footer>
+      <p>AquaLink &copy; 2026</p>
 
+      <p>Rural Water Delivery Simulator</p>
+    </footer>
+
+    <!-- Background Music Create -->
     <audio id="backgroundMusic" loop>
       <source src="audio/background-music.mp3" type="audio/mpeg" />
 
       Your browser does not support audio.
     </audio>
-
-    //footer
-    <footer>
-      <p>AquaLink | Rural Water Delivery Simulator</p>
-    </footer>
 
     <script src="script.js"></script>
   </body>
