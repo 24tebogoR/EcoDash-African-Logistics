@@ -1,20 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
+
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoDash - Water Delivery Simulator</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <h1>EcoDash</h1>
+  <head>
+    <meta charset="UTF-8" />
 
-    <p>Water Delivery Simulator</p>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <canvas width="900" height="600"></canvas>
+    <title>AquaLink - Rural Water Delivery Simulator</title>
 
-  
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
-</body>
-   <script src="script.js"></script>   
+  <body>
+//creatw header sec
+    <header>
+      <h1>AquaLink</h1>
+
+      <p>Rural Water Delivery Simulator</p>
+    </header>
+
+    <section class="AQintro">
+      <h2>Water Delivery Mission</h2>
+
+      <p>
+        AquaLink is a JavaScript simulation that represents water delivery in a
+        rural South African environment.
+      </p>
+    </section>
+
+    <main>
+      <div class="container">
+        <canvas></canvas>
+      </div>
+
+   //create music
+
+      <section class="audio-controls">
+        <h2>Simulation Audio</h2>
+
+        <button onclick="playMusic()">Play Music</button>
+      </section>
+    </main>
+
+    //music
+
+    <audio id="backgroundMusic" loop>
+      <source src="audio/background-music.mp3" type="audio/mpeg" />
+
+      Your browser does not support audio.
+    </audio>
+
+    //footer
+    <footer>
+      <p>AquaLink | Rural Water Delivery Simulator</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
 </html>
