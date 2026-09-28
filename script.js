@@ -1,1608 +1,761 @@
-const canvas = document.querySelector("canvas");
+// AQUALINK - RURAL WATER DELIVERY SIMULATOR
 
+// Canvas setup
+const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 
 canvas.width = 900;
 canvas.height = 500;
 
+// Game State Variables
 let weatherCondition = "Rainy";
-
-// game variables
-// Game states
 let gameStarted = false;
 let gamePaused = false;
 let gameOver = false;
 
-// Game statistics
 let distanceTravelled = 0;
 let score = 0;
 let highScore = 0;
-
-// Battery tracking
 let totalBatteryUsed = 0;
 
-// Collision message
 let collisionMessage = "";
+let collisionTimer = 0;
+let housesDelivered = 0;
 
-// controls
+// Keyboard Controls State
 let keys = {
   up: false,
   down: false,
   left: false,
-
   right: false
-
 };
 
-// keydwon event
-
+// Event Listeners for Arrow Key Controls
 document.addEventListener("keydown", function (event) {
-  // Move up
   if (event.key === "ArrowUp") {
-
     keys.up = true;
-
     event.preventDefault();
   }
-
-  // Move down
   if (event.key === "ArrowDown") {
-
     keys.down = true;
-
     event.preventDefault();
   }
-
-  // Move left
   if (event.key === "ArrowLeft") {
-
     keys.left = true;
-
     event.preventDefault();
   }
-
-  // Move right
   if (event.key === "ArrowRight") {
-
     keys.right = true;
-
     event.preventDefault();
   }
-
 });
 
-// key up even
 document.addEventListener("keyup", function (event) {
-
-  // Stop moving up
-  if (event.key === "ArrowUp") {
-
-    keys.up = false;
-  }
-
-  // Stop moving down
-  if (event.key === "ArrowDown") {
-
-    keys.down = false;
-  }
-
-
-  // Stop moving left
-  if (event.key === "ArrowLeft") {
-
-    keys.left = false;
-  }
-
-
-  // Stop moving right
-  if (event.key === "ArrowRight") {
-
-    keys.right = false;
-
-  }
-
+  if (event.key === "ArrowUp") keys.up = false;
+  if (event.key === "ArrowDown") keys.down = false;
+  if (event.key === "ArrowLeft") keys.left = false;
+  if (event.key === "ArrowRight") keys.right = false;
 });
 
-// create high score 
-let savedHighScore =
-  localStorage.getItem("aquaLinkHighScore");
-
+// Load Saved High Score from Local Storage
+let savedHighScore = localStorage.getItem("aquaLinkHighScore");
 if (savedHighScore !== null) {
-
   highScore = Number(savedHighScore);
-
 }
 
-// create WATER DELIVERY VEHICLE CLASS
-
+// Water Delivery Vehicle Class
 class WaterVehicle {
-
   constructor(x, y, width, height, color) {
-
     this.x = x;
-
     this.y = y;
-
     this.width = width;
-
     this.height = height;
-
     this.color = color;
-
-    // Vehicle direction
     this.angle = 0;
-
-    // Vehicle velocity
     this.velocityX = 0;
-
     this.velocityY = 0;
-
-    // Vehicle acceleration
-    this.acceleration = 0.3;
-
-    // Maximum speed
+    this.acceleration = 0.25;
     this.maxSpeed = 4;
-
-    // Battery
     this.Battery = 100;
-
-    // Vehicle blocked state
     this.isBlocked = false;
-
   }
 
-  // BATTERY GETTER
+  // Encapsulation: Getter and Setter for Battery level to keep bounds between 0 and 100
   get battery() {
     return this.Battery;
   }
 
-  // BATTERY SETTER
   set battery(value) {
-
     if (value < 0) {
-
       this.Battery = 0;
-
-    }
-
-    else if (value > 100) {
-
+    } else if (value > 100) {
       this.Battery = 100;
-
-    }
-
-    else {
-
+    } else {
       this.Battery = value;
-
     }
-
   }
 
-  // DRAW VEHICLE
+  // Render the vehicle, tank, cabin, and wheels onto the canvas
   draw() {
-
     // Main vehicle body
     ctx.fillStyle = this.color;
-
-    ctx.fillRect(
-      this.x,
-      this.y,
-      this.width,
-      this.height
-    );
+    ctx.fillRect(this.x, this.y + 5, this.width, this.height - 10);
 
     // Water tank
-    ctx.fillStyle = "#8ecae6";
-
-    ctx.fillRect(
-      this.x + 12,
-      this.y - 12,
-      36,
-      12
-    );
+    ctx.fillStyle = "lightblue";
+    ctx.fillRect(this.x + 5, this.y + 4, 35, 23);
 
     // Water tank outline
-    ctx.strokeStyle = "#023e8a";
-
-    ctx.strokeRect(
-      this.x + 12,
-      this.y - 12,
-      36,
-      12
-    );
+    ctx.strokeStyle = "darkblue";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(this.x + 5, this.y + 4, 35, 23);
 
     // Driver cabin
-    ctx.fillStyle = "#1d3557";
+    ctx.fillStyle = "steelblue";
+    ctx.fillRect(this.x + 40, this.y + 7, 15, 20);
 
-    ctx.fillRect(
-      this.x + 38,
-      this.y + 5,
-      18,
-      20
-    );
+    // Window
+    ctx.fillStyle = "aliceblue";
+    ctx.fillRect(this.x + 43, this.y + 9, 9, 8);
 
-    // Driver window
-    ctx.fillStyle = "#90e0ef";
+    // Front bumper
+    ctx.fillStyle = "dimgray";
+    ctx.fillRect(this.x + this.width - 3, this.y + 22, 6, 5);
 
-    ctx.fillRect(
-      this.x + 41,
-      this.y + 8,
-      12,
-      9
-    );
-
-    // Front vehicle
-    ctx.fillStyle = "#555555";
-
-    ctx.fillRect(
-      this.x + this.width,
-      this.y + 10,
-      5,
-      15
-    );
-
-    // wheel vehicle
+    // Wheels
     ctx.fillStyle = "black";
-
     ctx.beginPath();
-
-    ctx.arc(
-      this.x + 15,
-      this.y + this.height,
-      8,
-      0,
-      Math.PI * 2
-    );
-
+    ctx.arc(this.x + 15, this.y + this.height, 7, 0, Math.PI * 2);
     ctx.fill();
 
-    // Front wheel
     ctx.beginPath();
-
-    ctx.arc(
-      this.x + 48,
-      this.y + this.height,
-      8,
-      0,
-      Math.PI * 2
-    );
-
+    ctx.arc(this.x + 48, this.y + this.height, 7, 0, Math.PI * 2);
     ctx.fill();
-
   }
-  // create movement of vehicle
+
+  // Update vehicle physics, velocity limits, friction, and boundaries
   updateVehicle() {
-    // Do not move if game is not active
-    if (!gameStarted || gamePaused || gameOver) {
-      return;
-    }
+    let moving = false;
 
-    // Do not move while blocked
-    if (this.isBlocked) {
-      return;
-    }
-
-// up key
+    // Apply acceleration based on key inputs
     if (keys.up) {
-
-      this.velocityY = -this.maxSpeed;
-
+      this.velocityY -= this.acceleration;
+      moving = true;
     }
-
     if (keys.down) {
-
-      this.velocityY = this.maxSpeed;
-
+      this.velocityY += this.acceleration;
+      moving = true;
     }
-    // left keys
-
     if (keys.left) {
-
-      this.velocityX = -this.maxSpeed;
-
+      this.velocityX -= this.acceleration;
+      moving = true;
     }
-// rifht key
     if (keys.right) {
-
-      this.velocityX = this.maxSpeed;
+      this.velocityX += this.acceleration;
+      moving = true;
     }
 
-    // slow down keys 
-    if (!keys.left && !keys.right) {
+    // Limit horizontal speed
+    if (this.velocityX > this.maxSpeed) this.velocityX = this.maxSpeed;
+    if (this.velocityX < -this.maxSpeed) this.velocityX = -this.maxSpeed;
 
-      this.velocityX *= 0.85;
+    // Limit vertical speed
+    if (this.velocityY > this.maxSpeed) this.velocityY = this.maxSpeed;
+    if (this.velocityY < -this.maxSpeed) this.velocityY = -this.maxSpeed;
 
-    }
+    // Apply friction to slow down naturally
+    this.velocityX *= 0.98;
+    this.velocityY *= 0.98;
 
-    if (!keys.up && !keys.down) {
+    // Save previous position before updating (used for collision rollback)
+    let previousX = this.x;
+    let previousY = this.y;
 
-      this.velocityY *= 0.85;
-
-    }
-    //update pos
+    // Update position
     this.x += this.velocityX;
-
     this.y += this.velocityY;
 
-   // boundaries 
+    // Enforce canvas boundaries
     if (this.x < 0) {
-
       this.x = 0;
-
       this.velocityX = 0;
-
     }
-
     if (this.x + this.width > canvas.width) {
-
-      this.x =
-        canvas.width - this.width;
-
+      this.x = canvas.width - this.width;
       this.velocityX = 0;
-
     }
-
     if (this.y < 0) {
-
       this.y = 0;
-
       this.velocityY = 0;
-
     }
-
     if (this.y + this.height > canvas.height) {
-
-      this.y =
-        canvas.height - this.height;
-
+      this.y = canvas.height - this.height;
       this.velocityY = 0;
-
     }
 
-    if (
-      this.velocityX !== 0 ||
-      this.velocityY !== 0
-    ) {
-
-      this.battery -= 0.03;
-      totalBatteryUsed += 0.03;
-
+    // Consume battery if moving (slightly faster rate)
+    if (moving && (this.velocityX !== 0 || this.velocityY !== 0)) {
+      this.battery -= 0.06;
+      totalBatteryUsed += 0.06;
     }
 
+    // Trigger game over if battery is depleted
     if (this.battery <= 0) {
-
-      this.battery = 0;
-
-      this.velocityX = 0;
-
-      this.velocityY = 0;
-
       endGame();
-
     }
 
+    return { previousX: previousX, previousY: previousY };
   }
 
-  checkCollission(obstacle) {
-    if (
-      this.x <
-      obstacle.x + obstacle.width &&
-
-      this.x + this.width >
-      obstacle.x &&
-
-      this.y <
-      obstacle.y + obstacle.height &&
-
-      this.y + this.height >
-      obstacle.y
-
-    ) {
-      return true;
-    }
-
-    else {
-      return false;
-    }
+  // Axis-Aligned Bounding Box (AABB) Collision Detection
+  checkCollission(object) {
+    return (
+      this.x < object.x + object.width &&
+      this.x + this.width > object.x &&
+      this.y < object.y + object.height &&
+      this.y + this.height > object.y
+    );
   }
 
+  // Apply environmental weather physics (e.g., rain drag)
   createWeatherCondition(weather) {
-    if (weather == "Rainy") {
-
+    if (weather === "Rainy") {
       this.velocityX *= 0.99;
-
       this.velocityY *= 0.99;
-
     }
   }
 
+  // Display temporary collision or event messages
   displayCollisionMessage(message) {
     collisionMessage = message;
+    collisionTimer = 120;
   }
-
 }
 
-//slar class
+// Solar Energy Grid Class (Recharge Station)
 class SolarEnergyGrid {
   constructor(x, y, width, height) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
-
-    // Recharge rate
     this.solarRechargeRate = 0.5;
   }
 
-  //solar area 
+  // Draw the recharge station and solar panels
   drawSolarArea() {
-
-    // Solar station background
-    ctx.fillStyle = "#f4d35e";
-
-    ctx.fillRect(
-      this.x,
-      this.y,
-      this.width,
-      this.height
-    );
+    ctx.fillStyle = "khaki";
+    ctx.fillRect(this.x, this.y, this.width, this.height);
 
     // Solar panels
-    ctx.fillStyle = "#264653";
+    ctx.fillStyle = "darkslategray";
+    ctx.fillRect(this.x + 12, this.y + 20, 45, 30);
+    ctx.fillRect(this.x + 72, this.y + 20, 45, 30);
 
-    ctx.fillRect(
-      this.x + 20,
-      this.y + 35,
-      55,
-      35
-    );
-
-    ctx.fillRect(
-      this.x + 90,
-      this.y + 35,
-      55,
-      35
-    );
-
-    // Solar panel lines
-    ctx.strokeStyle = "#90caf9";
-
+    // Solar panel grid lines
+    ctx.strokeStyle = "lightskyblue";
+    ctx.lineWidth = 1;
     ctx.beginPath();
-
-    // First panel horizontal line
-    ctx.moveTo(
-      this.x + 20,
-      this.y + 52
-    );
-
-    ctx.lineTo(
-      this.x + 75,
-      this.y + 52
-    );
-
-    // First panel vertical line
-    ctx.moveTo(
-      this.x + 47,
-      this.y + 35
-    );
-
-    ctx.lineTo(
-      this.x + 47,
-      this.y + 70
-    );
-
-    // Second panel horizontal line
-    ctx.moveTo(
-      this.x + 90,
-      this.y + 52
-    );
-
-    ctx.lineTo(
-      this.x + 145,
-      this.y + 52
-    );
-
-
-    // Second panel vertical line
-    ctx.moveTo(
-      this.x + 117,
-      this.y + 35
-    );
-
-    ctx.lineTo(
-      this.x + 117,
-      this.y + 70
-    );
-
+    ctx.moveTo(this.x + 12, this.y + 35);
+    ctx.lineTo(this.x + 57, this.y + 35);
+    ctx.moveTo(this.x + 34, this.y + 20);
+    ctx.lineTo(this.x + 34, this.y + 50);
+    ctx.moveTo(this.x + 72, this.y + 35);
+    ctx.lineTo(this.x + 117, this.y + 35);
+    ctx.moveTo(this.x + 94, this.y + 20);
+    ctx.lineTo(this.x + 94, this.y + 50);
     ctx.stroke();
 
-    // Solar supports
-    ctx.fillStyle = "#555555";
+    // Panel supports
+    ctx.fillStyle = "gray";
+    ctx.fillRect(this.x + 32, this.y + 50, 4, 15);
+    ctx.fillRect(this.x + 92, this.y + 50, 4, 15);
 
-    ctx.fillRect(
-      this.x + 45,
-      this.y + 70,
-      5,
-      20
-    );
-
-    ctx.fillRect(
-      this.x + 115,
-      this.y + 70,
-      5,
-      20
-    );
-
-    // Solar station label
+    // Label
     ctx.fillStyle = "black";
-
-    ctx.font = "16px Calibri";
-
-    ctx.fillText(
-      "Solar Energy Grid",
-      this.x + 25,
-      this.y + 22
-    );
-
+    ctx.font = "13px Calibri";
+    ctx.fillText("Solar Grid", this.x + 35, this.y + 70);
   }
 
+  // Recharge vehicle battery if inside the solar zone
   checkBatteryRecharge(vehicle) {
-    if (
-      vehicle.x <
-      this.x + this.width &&
-
-      vehicle.x + vehicle.width >
-      this.x &&
-
-      vehicle.y <
-      this.y + this.height &&
-
-      vehicle.y + vehicle.height >
-      this.y
-
-    ) {
-
-      vehicle.battery +=
-        this.solarRechargeRate;
-
+    if (vehicle.checkCollission(this)) {
+      vehicle.battery += this.solarRechargeRate;
     }
-
   }
 
+  // Show active recharge text indicator
   displayRechargeStatus(vehicle) {
-
-    if (
-      vehicle.x <
-      this.x + this.width &&
-
-      vehicle.x + vehicle.width >
-      this.x &&
-
-      vehicle.y <
-      this.y + this.height &&
-
-      vehicle.y + vehicle.height >
-      this.y
-
-    ) {
-
-      ctx.fillStyle = "#006400";
-
-      ctx.font = "17px Calibri";
-
-      ctx.fillText(
-        "Solar Recharge Active",
-        20,
-        200
-      );
+    if (vehicle.checkCollission(this)) {
+      ctx.fillStyle = "green";
+      ctx.font = "15px Calibri";
+      ctx.fillText("Solar Recharge Active", this.x, this.y - 8);
     }
   }
 }
 
+// Obstacles Class (Potholes, Fallen Trees, Rivers)
 class Obstacles {
-
-  constructor(
-    x,
-    y,
-    width,
-    height,
-    type,
-    color
-  ) {
-
+  constructor(x, y, width, height, type, color) {
     this.x = x;
-
     this.y = y;
-
     this.width = width;
-
     this.height = height;
-
     this.type = type;
-
     this.color = color;
-
   }
 
+  // Draw standard obstacle
   drawObstacle() {
-
     ctx.fillStyle = this.color;
-
-    ctx.fillRect(
-      this.x,
-      this.y,
-      this.width,
-      this.height
-    );
+    ctx.fillRect(this.x, this.y, this.width, this.height);
 
     ctx.fillStyle = "black";
-
     ctx.font = "14px Calibri";
-
-    ctx.fillText(
-      this.type,
-      this.x + 5,
-      this.y + 20
-    );
-
+    ctx.fillText(this.type, this.x + 5, this.y + 20);
   }
 
+  // Draw specialized river obstacle with wave lines
   drawRiver() {
+    ctx.fillStyle = "lightblue";
+    ctx.fillRect(this.x, this.y, this.width, this.height);
 
-    // River water
-    ctx.fillStyle = "#8ecae6";
-
-    ctx.fillRect(
-      this.x,
-      this.y,
-      this.width,
-      this.height
-    );
-
-    // Water lines
+    // Water flow lines matching road width
     ctx.strokeStyle = "white";
-
     ctx.beginPath();
-
-    ctx.moveTo(
-      this.x + 15,
-      this.y + 15
-    );
-
-    ctx.lineTo(
-      this.x + 55,
-      this.y + 15
-    );
-
-    ctx.moveTo(
-      this.x + 80,
-      this.y + 30
-    );
-
-    ctx.lineTo(
-      this.x + 125,
-      this.y + 30
-    );
-
-    ctx.moveTo(
-      this.x + 25,
-      this.y + 42
-    );
-
-    ctx.lineTo(
-      this.x + 70,
-      this.y + 42
-    );
-
+    ctx.moveTo(this.x + 15, this.y + 15);
+    ctx.lineTo(this.x + 45, this.y + 15);
+    ctx.moveTo(this.x + 55, this.y + 25);
+    ctx.lineTo(this.x + 85, this.y + 25);
     ctx.stroke();
 
-    // River label
     ctx.fillStyle = "black";
-
     ctx.font = "14px Calibri";
-
-    ctx.fillText(
-      "River Crossing",
-      this.x + 40,
-      this.y + 25
-    );
+    ctx.fillText("River Crossing", this.x + 10, this.y + 24);
   }
 }
 
-const waterVehicle = new WaterVehicle(
-  120,
-  250,
-  60,
-  35,
-  "#26619C"
-);
+// House Class (Delivery Destinations)
+class House {
+  constructor(x, y, width, height, name) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.name = name;
+    this.delivered = false;
+  }
 
-const solarArea = new SolarEnergyGrid(
-  650,
-  210,
-  180,
-  100
-);
+  // Render house structure, roof, and delivery status
+  drawHouse() {
+    // House body
+    ctx.fillStyle = "tan";
+    ctx.fillRect(this.x, this.y + 15, this.width, this.height - 15);
 
-// Side Road 1
-// Pothole
+    // Roof
+    ctx.fillStyle = "saddlebrown";
+    ctx.beginPath();
+    ctx.moveTo(this.x - 5, this.y + 15);
+    ctx.lineTo(this.x + this.width / 2, this.y - 12);
+    ctx.lineTo(this.x + this.width + 5, this.y + 15);
+    ctx.closePath();
+    ctx.fill();
 
-const pothole = new Obstacles(
-  320,
-  100,
-  60,
-  35,
-  "Pothole",
-  "brown"
-);
+    // Door
+    ctx.fillStyle = "sienna";
+    ctx.fillRect(this.x + 22, this.y + 32, 14, 23);
 
-// Side Road 2
-// Fallen Tree
+    // Window
+    ctx.fillStyle = "powderblue";
+    ctx.fillRect(this.x + 42, this.y + 22, 14, 14);
 
-const fallenTree = new Obstacles(
-  475,
-  390,
-  90,
-  35,
-  "Fallen Tree",
-  "green"
-);
+    // House label
+    ctx.fillStyle = "black";
+    ctx.font = "13px Calibri";
+    ctx.fillText(this.name, this.x, this.y + this.height + 15);
 
-// Side Road 3
-// River
+    // Delivery status indicator
+    if (this.delivered) {
+      ctx.fillStyle = "green";
+      ctx.font = "bold 12px Calibri";
+      ctx.fillText("Water Delivered", this.x - 5, this.y + this.height + 30);
+    }
+  }
+}
 
-const river = new Obstacles(
-  655,
-  420,
-  150,
-  50,
-  "River",
-  "lightblue"
-);
+// Instantiate Game Objects
+const waterVehicle = new WaterVehicle(50, 250, 60, 35, "dodgerblue");
+const solarArea = new SolarEnergyGrid(680, 230, 130, 80);
 
+const pothole = new Obstacles(320, 100, 60, 35, "Pothole", "saddlebrown");
+const fallenTree = new Obstacles(475, 390, 90, 35, "Fallen Tree", "forestgreen");
+const river = new Obstacles(680, 410, 100, 40, "River", "lightblue");
+
+// Houses placed securely away from the top-left HUD dashboard
+const house1 = new House(100, 370, 60, 55, "House 1"); // Moved to bottom-left grass area
+const house2 = new House(580, 110, 60, 55, "House 2"); // Above main road
+const house3 = new House(800, 360, 60, 55, "House 3"); // Below main road near side road 3
+
+let houses = [house1, house2, house3];
+
+// Draw Environment Background, Roads, and Scenery
 function drawEnviroment() {
+  // Grass background
+  ctx.fillStyle = "darkseagreen";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = "#87A96B";
+  // Main road
+  ctx.fillStyle = "rosybrown";
+  ctx.fillRect(0, 210, canvas.width, 120);
 
-  ctx.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  ctx.fillStyle = "#AE9882";
-
-  ctx.fillRect(
-    0,
-    210,
-    canvas.width,
-    120
-  );
-
-  // Main road centre line
   ctx.fillStyle = "lightyellow";
+  ctx.fillRect(0, 268, canvas.width, 5);
 
-  ctx.fillRect(
-    0,
-    268,
-    canvas.width,
-    5
-  );
+  // Side road 1
+  ctx.fillStyle = "rosybrown";
+  ctx.fillRect(300, 0, 100, 210);
 
-  ctx.fillStyle = "#AE9882";
-
-  ctx.fillRect(
-    300,
-    0,
-    100,
-    210
-  );
-
-  // Side road line
   ctx.fillStyle = "lightyellow";
+  ctx.fillRect(347, 0, 5, 210);
 
-  ctx.fillRect(
-    347,
-    0,
-    5,
-    210
-  );
+  // Side road 2
+  ctx.fillStyle = "rosybrown";
+  ctx.fillRect(470, 330, 100, 170);
 
-  ctx.fillStyle = "#AE9882";
-
-  ctx.fillRect(
-    470,
-    330,
-    100,
-    170
-  );
-
-  // Side road line
   ctx.fillStyle = "lightyellow";
+  ctx.fillRect(517, 330, 5, 170);
 
-  ctx.fillRect(
-    517,
-    330,
-    5,
-    170
-  );
+  // Side road 3
+  ctx.fillStyle = "rosybrown";
+  ctx.fillRect(680, 330, 100, 170);
 
-  ctx.fillStyle = "#AE9882";
-
-  ctx.fillRect(
-    680,
-    330,
-    100,
-    170
-  );
-
-  // Side road line
   ctx.fillStyle = "lightyellow";
+  ctx.fillRect(727, 330, 5, 170);
 
-  ctx.fillRect(
-    727,
-    330,
-    5,
-    170
-  );
-
-  drawTree(80, 150);
-  drawTree(200, 120);
+  // Rural trees (positioned in bottom-left and other scenic areas)
+  drawTree(50, 360);
+  drawTree(180, 430);
   drawTree(830, 100);
-  drawTree(850, 390);
-
+  drawTree(850, 300);
+  drawTree(230, 360);
+  drawTree(410, 150);
+  drawTree(610, 80);
 }
 
+// Helper to draw trees
 function drawTree(x, y) {
+  ctx.fillStyle = "saddlebrown";
+  ctx.fillRect(x, y, 20, 50);
 
-  // Tree trunk
-  ctx.fillStyle = "brown";
-
-  ctx.fillRect(
-    x,
-    y,
-    20,
-    60
-  );
-
-  // Tree leaves
-  ctx.fillStyle = "green";
-
+  ctx.fillStyle = "forestgreen";
   ctx.beginPath();
-
-  ctx.arc(
-    x + 10,
-    y,
-    35,
-    0,
-    Math.PI * 2
-  );
-
+  ctx.arc(x + 10, y, 30, 0, Math.PI * 2);
   ctx.fill();
-
 }
 
-  // HUD background
-function drawHUD() {
-
-  ctx.fillStyle =
-    "rgba(255, 255, 255, 0.88)";
-
-  ctx.fillRect(
-    10,
-    10,
-    255,
-    190
-  );
-
-  // HUD title
-  ctx.fillStyle = "#023e8a";
-
-  ctx.font = "bold 20px Calibri";
-
-  ctx.fillText(
-    "AquaLink",
-    20,
-    35
-  );
-
-  // text
-  ctx.fillStyle = "black";
-
-  ctx.font = "16px Calibri";
-
-  // Battery
-  ctx.fillText(
-    "Battery: " +
-    Math.round(waterVehicle.battery) +
-    "%",
-    20,
-    58
-  );
-
-  // Distance
-  ctx.fillText(
-    "Distance: " +
-    Math.round(distanceTravelled) +
-    " km",
-    20,
-    80
-  );
-
-  // Score
-  ctx.fillText(
-    "Score: " +
-    score,
-    20,
-    102
-  );
-
-  // High score
-  ctx.fillText(
-    "High Score: " +
-    highScore,
-    20,
-    124
-  );
-
-  // Energy efficiency
-  ctx.fillText(
-    "Efficiency: " +
-    calculateEnergyEfficiency() +
-    "%",
-    20,
-    146
-  );
-
-  // Weather
-  ctx.fillText(
-    "Weather: " +
-    weatherCondition,
-    20,
-    168
-  );
-
-  // Vehicle status
-  let vehicleStatus = "Ready";
-
-  if (gameStarted) {
-
-    vehicleStatus = "Moving";
+// Handle Collisions with Blocked Routes / Obstacles
+function checkObstacleCollisions(previousX, previousY) {
+  if (waterVehicle.checkCollission(pothole)) {
+    waterVehicle.x = previousX;
+    waterVehicle.y = previousY;
+    waterVehicle.velocityX = 0;
+    waterVehicle.velocityY = 0;
+    waterVehicle.displayCollisionMessage("Pothole! Route blocked - use another road.");
   }
 
-  if (gamePaused) {
-
-    vehicleStatus = "Paused";
+  if (waterVehicle.checkCollission(fallenTree)) {
+    waterVehicle.x = previousX;
+    waterVehicle.y = previousY;
+    waterVehicle.velocityX = 0;
+    waterVehicle.velocityY = 0;
+    waterVehicle.displayCollisionMessage("Fallen Tree! Route blocked - find another route.");
   }
 
-  if (waterVehicle.isBlocked) {
-
-    vehicleStatus = "Route Blocked";
-  }
-
-  if (gameOver) {
-
-    vehicleStatus = "Game Over";
-  }
-
-  ctx.fillText(
-    "Status: " +
-    vehicleStatus,
-    20,
-    190
-  );
-
-  // Collision message
-  if (collisionMessage !== "") {
-
-    ctx.fillStyle = "red";
-
-    ctx.font = "bold 16px Calibri";
-
-    ctx.fillText(
-      collisionMessage,
-      20,
-      220
-    );
-
+  if (waterVehicle.checkCollission(river)) {
+    waterVehicle.x = previousX;
+    waterVehicle.y = previousY;
+    waterVehicle.velocityX = 0;
+    waterVehicle.velocityY = 0;
+    waterVehicle.displayCollisionMessage("River Crossing! Route blocked - use an alternate road.");
   }
 }
 
+// Check House Deliveries
+function checkHouseDelivery() {
+  for (let i = 0; i < houses.length; i++) {
+    let house = houses[i];
+
+    if (!house.delivered && waterVehicle.checkCollission(house)) {
+      house.delivered = true;
+      housesDelivered++;
+      score += 100;
+      collisionMessage = "Water delivered to " + house.name + "!";
+      collisionTimer = 120;
+    }
+  }
+}
+
+// Calculate Energy Efficiency Percentage
 function calculateEnergyEfficiency() {
-
-  // No movement yet
-  if (distanceTravelled <= 0) {
-    return 100;
-  }
-  // Prevent division by zero
-  if (totalBatteryUsed <= 0) {
+  if (distanceTravelled <= 0 || totalBatteryUsed <= 0) {
     return 100;
   }
 
-  /* This creates an efficiency percentage using distance travelled compared with battery consumed.
-  */
+  let efficiency = (distanceTravelled / (distanceTravelled + totalBatteryUsed)) * 100;
 
-  let efficiency =
-    (
-      distanceTravelled /
-      (
-        distanceTravelled +
-        totalBatteryUsed
-      )
-    ) * 100;
-
-  // Keep score between 0 and 100
-  if (efficiency > 100) {
-    efficiency = 100;
-  }
-
-  if (efficiency < 0) {
-    efficiency = 0;
-  }
+  if (efficiency > 100) efficiency = 100;
+  if (efficiency < 0) efficiency = 0;
 
   return Math.round(efficiency);
-
 }
 
+// Calculate Final Score and Update High Score in Local Storage
 function calculateScore() {
-  let efficiency =
-    calculateEnergyEfficiency();
+  let efficiency = calculateEnergyEfficiency();
 
-  score =
-    Math.round(distanceTravelled) +
-    efficiency;
+  score = Math.round(distanceTravelled) + efficiency + (housesDelivered * 100);
+
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem("aquaLinkHighScore", highScore);
+  }
 }
 
+// Draw Heads-Up Display (HUD)
+function drawHUD() {
+  ctx.fillStyle = "rgba(255, 255, 255, 0.90)";
+  ctx.fillRect(10, 10, 255, 190);
+
+  ctx.fillStyle = "darkblue";
+  ctx.font = "bold 18px Calibri";
+  ctx.fillText("AquaLink", 20, 32);
+
+  ctx.fillStyle = "black";
+  ctx.font = "14px Calibri";
+  ctx.fillText("Battery: " + Math.round(waterVehicle.battery) + "%", 20, 55);
+  ctx.fillText("Distance: " + Math.round(distanceTravelled) + " km", 20, 77);
+  ctx.fillText("Score: " + score, 20, 99);
+  ctx.fillText("High Score: " + highScore, 20, 121);
+  ctx.fillText("Efficiency: " + calculateEnergyEfficiency() + "%", 20, 143);
+  ctx.fillText("Deliveries: " + housesDelivered + "/3", 20, 165);
+  ctx.fillText("Weather: " + weatherCondition, 20, 187);
+
+  if (collisionMessage !== "") {
+    ctx.fillStyle = "firebrick";
+    ctx.font = "bold 16px Calibri";
+    ctx.fillText(collisionMessage, 285, 30);
+  }
+}
+
+// Screen Overlays (Start, Pause, Game Over)
 function displayStartScreen() {
+  ctx.fillStyle = "darkgreen";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Background
-  ctx.fillStyle = "#1f4d3a";
-
-  ctx.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  // Title
   ctx.fillStyle = "white";
+  ctx.textAlign = "center";
 
-  ctx.font = "bold 42px Calibri";
+  ctx.font = "bold 42px Arial";
+  ctx.fillText("AquaLink", canvas.width / 2, 170);
 
-  ctx.fillText(
-    "AquaLink",
-    350,
-    175
-  );
+  ctx.font = "22px Arial";
+  ctx.fillText("Rural Water Delivery Simulator", canvas.width / 2, 215);
 
-  // Subtitle
-  ctx.font = "21px Calibri";
+  ctx.font = "17px Arial";
+  ctx.fillText("Deliver water to 3 rural households.", canvas.width / 2, 260);
+  ctx.fillText("Use the arrow keys and avoid blocked routes.", canvas.width / 2, 290);
 
-  ctx.fillText(
-    "Rural Water Delivery Simulator",
-    280,
-    215
-  );
+  ctx.font = "bold 18px Arial";
+  ctx.fillText("Press START GAME to begin", canvas.width / 2, 345);
 
-  // Instructions
-  ctx.font = "18px Calibri";
-
-  ctx.fillText(
-    "Use the arrow keys to drive the water vehicle.",
-    260,
-    265
-  );
-
-  ctx.fillText(
-    "Avoid obstacles and manage your battery.",
-    280,
-    295
-  );
-
-  ctx.fillText(
-    "Find the Solar Energy Grid to recharge.",
-    285,
-    325
-  );
-
+  ctx.textAlign = "left";
 }
 
 function displayPauseScreen() {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Transparent overlay
-  ctx.fillStyle =
-    "rgba(0, 0, 0, 0.65)";
-
-  ctx.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  // Pause title
   ctx.fillStyle = "white";
+  ctx.textAlign = "center";
+  ctx.font = "bold 40px Arial";
+  ctx.fillText("GAME PAUSED", canvas.width / 2, 230);
 
-  ctx.font = "bold 40px Calibri";
+  ctx.font = "18px Arial";
+  ctx.fillText("Press PAUSE again to continue", canvas.width / 2, 270);
 
-  ctx.fillText(
-    "GAME PAUSED",
-    335,
-    220
-  );
-
-  // Message
-  ctx.font = "18px Calibri";
-
-  ctx.fillText(
-    "Press RESUME to continue",
-    325,
-    260
-  );
-
+  ctx.textAlign = "left";
 }
 
 function displayGameOverScreen() {
+  ctx.fillStyle = "darkolivegreen";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Dark red overlay
-  ctx.fillStyle =
-    "rgba(80, 0, 0, 0.88)";
-
-  ctx.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  // Game over
   ctx.fillStyle = "white";
+  ctx.textAlign = "center";
 
-  ctx.font = "bold 42px Calibri";
+  ctx.font = "bold 40px Arial";
+  ctx.fillText("GAME OVER", canvas.width / 2, 150);
 
-  ctx.fillText(
-    "GAME OVER",
-    345,
-    155
-  );
+  ctx.font = "20px Arial";
+  ctx.fillText("Final Score: " + score, canvas.width / 2, 210);
+  ctx.fillText("High Score: " + highScore, canvas.width / 2, 245);
+  ctx.fillText("Water Deliveries: " + housesDelivered + "/3", canvas.width / 2, 280);
+  ctx.fillText("Distance: " + Math.round(distanceTravelled) + " km", canvas.width / 2, 315);
 
-  // Reason
-  ctx.font = "20px Calibri";
+  ctx.font = "bold 18px Arial";
+  ctx.fillText("Press RESTART to try again", canvas.width / 2, 370);
 
-  ctx.fillText(
-    "Battery depleted",
-    360,
-    195
-  );
-
-  // Distance
-  ctx.fillText(
-    "Distance: " +
-    Math.round(distanceTravelled) +
-    " km",
-    355,
-    235
-  );
-
-  // Efficiency
-  ctx.fillText(
-    "Energy Efficiency: " +
-    calculateEnergyEfficiency() +
-    "%",
-    315,
-    270
-  );
-
-  // Score
-  ctx.fillText(
-    "Score: " +
-    score,
-    395,
-    305
-  );
-
-  // High score
-  ctx.fillText(
-    "High Score: " +
-    highScore,
-    370,
-    340
-  );
-
-  // Restart message
-  ctx.font = "18px Calibri";
-
-  ctx.fillText(
-    "Press RESTART to try again",
-    325,
-    390
-  );
-
+  ctx.textAlign = "left";
 }
 
+// Game State Control Functions
 function startGame() {
-
   gameStarted = true;
-
   gamePaused = false;
-
   gameOver = false;
 
-  // Reset statistics
-  distanceTravelled = 0;
+  playMusic();
 
-  score = 0;
-
-  totalBatteryUsed = 0;
-
-  // Reset vehicle
-  waterVehicle.battery = 100;
-
-  waterVehicle.x = 120;
-
-  waterVehicle.y = 250;
-
-  waterVehicle.velocityX = 0;
-
-  waterVehicle.velocityY = 0;
-
-  waterVehicle.isBlocked = false;
-
-  // Reset keys
-  keys.up = false;
-
-  keys.down = false;
-
-  keys.left = false;
-
-  keys.right = false;
-
-  // Clear collision message
-  collisionMessage = "";
-
-  // Show correct buttons
-  document.getElementById(
-    "startButton"
-  ).style.display = "none";
-
-  document.getElementById(
-    "pauseButton"
-  ).style.display = "inline-block";
-
-  document.getElementById(
-    "restartButton"
-  ).style.display = "inline-block";
-
-  document.getElementById(
-    "pauseButton"
-  ).textContent = "PAUSE";
-
+  document.getElementById("startButton").style.display = "none";
+  document.getElementById("pauseButton").style.display = "inline-block";
 }
 
 function pauseGame() {
+  if (!gameStarted || gameOver) return;
 
-  // Do nothing if game is not running
-  if (!gameStarted || gameOver) {
-    return;
-  }
+  gamePaused = !gamePaused;
+  let pauseButton = document.getElementById("pauseButton");
 
-  // If already paused
   if (gamePaused) {
-
-    gamePaused = false;
-
-    document.getElementById(
-      "pauseButton"
-    ).textContent = "PAUSE";
+    pauseButton.textContent = "RESUME";
+  } else {
+    pauseButton.textContent = "PAUSE";
   }
-
-  // If currently playing
-  else {
-    gamePaused = true;
-
-    // Stop vehicle
-    waterVehicle.velocityX = 0;
-
-    waterVehicle.velocityY = 0;
-
-    document.getElementById(
-      "pauseButton"
-    ).textContent = "RESUME";
-
-  }
-
 }
 
 function endGame() {
-  // Prevent ending the game twice
-  if (gameOver) {
-
-    return;
-
-  }
-
   gameOver = true;
-  gameStarted = false;
   gamePaused = false;
 
-  // Stop vehicle
-  waterVehicle.velocityX = 0;
+  document.getElementById("pauseButton").style.display = "none";
+  document.getElementById("restartButton").style.display = "inline-block";
 
-  waterVehicle.velocityY = 0;
-
-  // Calculate final score
   calculateScore();
-
-  // Check high score
-  if (score > highScore) {
-
-    highScore = score;
-
-    // Save high score
-    localStorage.setItem(
-      "aquaLinkHighScore",
-      highScore
-    );
-
-  }
-
-  // Reset keys
-  keys.up = false;
-
-  keys.down = false;
-
-  keys.left = false;
-
-  keys.right = false;
-
-  // Hide pause button
-  document.getElementById(
-    "pauseButton"
-  ).style.display = "none";
-
-  // Keep restart button visible
-  document.getElementById(
-    "restartButton"
-  ).style.display = "inline-block";
-
 }
 
 function restartGame() {
+  waterVehicle.x = 50;
+  waterVehicle.y = 250;
+  waterVehicle.velocityX = 0;
+  waterVehicle.velocityY = 0;
+  waterVehicle.battery = 100;
+
+  distanceTravelled = 0;
+  totalBatteryUsed = 0;
+  score = 0;
+  housesDelivered = 0;
+  collisionMessage = "";
+  collisionTimer = 0;
 
   gameStarted = true;
   gamePaused = false;
   gameOver = false;
 
-  // Reset statistics
-  distanceTravelled = 0;
+  // Reset house states
+  house1.delivered = false;
+  house2.delivered = false;
+  house3.delivered = false;
 
-  score = 0;
-
-  totalBatteryUsed = 0;
-
-  // Reset vehicle
-  waterVehicle.battery = 100;
-
-  waterVehicle.x = 120;
-
-  waterVehicle.y = 250;
-
-  waterVehicle.velocityX = 0;
-
-  waterVehicle.velocityY = 0;
-
-  waterVehicle.isBlocked = false;
-
-  // Reset keys
-  keys.up = false;
-  keys.down = false;
-  keys.left = false;
-  keys.right = false;
-
-  // Clear collision message
-  collisionMessage = "";
-
-  // Buttons
-  document.getElementById(
-    "startButton"
-  ).style.display = "none";
-
-  document.getElementById(
-    "pauseButton"
-  ).style.display = "inline-block";
-
-  document.getElementById(
-    "restartButton"
-  ).style.display = "inline-block";
-
-  document.getElementById(
-    "pauseButton"
-  ).textContent = "PAUSE";
-
+  document.getElementById("restartButton").style.display = "none";
+  document.getElementById("pauseButton").style.display = "inline-block";
+  document.getElementById("pauseButton").textContent = "PAUSE";
 }
 
-function checkObstacleCollisions() {
-  if (
-    waterVehicle.checkCollission(pothole)
-  ) {
-
-    waterVehicle.displayCollisionMessage(
-      "Pothole! Vehicle slowed down"
-    );
-
-    waterVehicle.velocityX *= 0.5;
-    waterVehicle.velocityY *= 0.5;
-
-  }
-  // fallen tree
-  if (
-    waterVehicle.checkCollission(fallenTree)
-  ) {
-
-    waterVehicle.displayCollisionMessage(
-      "Fallen Tree! Route blocked"
-    );
-
-    // Stop vehicle
-    waterVehicle.velocityX = 0;
-
-    waterVehicle.velocityY = 0;
-
-  }
-
-  if (
-    waterVehicle.checkCollission(river)
-  ) {
-
-    waterVehicle.displayCollisionMessage(
-      "River! Vehicle speed reduced"
-    );
-
-    waterVehicle.velocityX *= 0.5;
-    waterVehicle.velocityY *= 0.5;
-
-  }
-
-}
-
+// Draw Entire Game World Elements
 function drawGameWorld() {
-
-  // Rural environment
   drawEnviroment();
 
-  // Solar energy grid
+  house1.drawHouse();
+  house2.drawHouse();
+  house3.drawHouse();
+
   solarArea.drawSolarArea();
 
-  // Obstacles
   pothole.drawObstacle();
-
   fallenTree.drawObstacle();
-
   river.drawRiver();
 
-  // Vehicle
   waterVehicle.draw();
-
-}
-
-function animate() {
-
-  // Clear canvas
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-  // start screen
-
-  if (!gameStarted && !gameOver) {
-
-    displayStartScreen();
-
-    requestAnimationFrame(animate);
-
-    return;
-
-  }
-  // game over
-
-  if (gameOver) {
-
-    drawGameWorld();
-
-    drawHUD();
-
-    displayGameOverScreen();
-
-    requestAnimationFrame(animate);
-
-    return;
-
-  }
-  // pause
-  if (gamePaused) {
-
-    drawGameWorld();
-
-    drawHUD();
-
-    displayPauseScreen();
-
-    requestAnimationFrame(animate);
-
-    return;
-  }
-  // UPDATE VEHICLE
-
-  waterVehicle.updateVehicle();
-
-  // DISTANCE TRAVELLED
-
-  distanceTravelled +=
-    Math.abs(waterVehicle.velocityX) +
-    Math.abs(waterVehicle.velocityY);
-
-  // WEATHER
-  waterVehicle.createWeatherCondition(
-    weatherCondition
-  );
-
-  // OBSTACLE COLLISIONS
-  checkObstacleCollisions();
-
-  // SOLAR RECHARGING
-  solarArea.checkBatteryRecharge(
-    waterVehicle
-  );
-
-  // CALCULATE SCORE
-  calculateScore();
-  // DRAW WORLD
-  drawGameWorld();
-  // DISPLAY RECHARGE STATUS
-
-  solarArea.displayRechargeStatus(
-    waterVehicle
-  );
-
-  // DRAW HUD
   drawHUD();
+}
 
-  // CLEAR COLLISION MESSAGE
-  if (collisionMessage !== "") {
-    setTimeout(function () {
-      collisionMessage = "";
+// Main Animation Loop
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    }, 500);
-
+  // Handle Start Screen
+  if (!gameStarted && !gameOver) {
+    displayStartScreen();
+    requestAnimationFrame(animate);
+    return;
   }
-// NEXT FRAME
+
+  // Handle Game Over Screen
+  if (gameOver) {
+    displayGameOverScreen();
+    requestAnimationFrame(animate);
+    return;
+  }
+
+  // Handle Pause Screen
+  if (gamePaused) {
+    drawGameWorld();
+    displayPauseScreen();
+    requestAnimationFrame(animate);
+    return;
+  }
+
+  // Update vehicle physics and fetch previous position
+  let previousPosition = waterVehicle.updateVehicle();
+
+  // Track distance travelled slower and more realistically
+  distanceTravelled += (Math.abs(waterVehicle.velocityX) + Math.abs(waterVehicle.velocityY)) * 0.05;
+
+  // Apply weather factors
+  waterVehicle.createWeatherCondition(weatherCondition);
+
+  // Check environment interactions
+  checkObstacleCollisions(previousPosition.previousX, previousPosition.previousY);
+  checkHouseDelivery();
+  solarArea.checkBatteryRecharge(waterVehicle);
+  calculateScore();
+
+  // Countdown message timer
+  if (collisionTimer > 0) {
+    collisionTimer--;
+  } else {
+    collisionMessage = "";
+  }
+
+  // Draw world and active recharge indicators
+  drawGameWorld();
+  solarArea.displayRechargeStatus(waterVehicle);
+
+  // Loop animation
   requestAnimationFrame(animate);
-
 }
 
-// BACKGROUND MUSIC
-
+// Background Music 
 function playMusic() {
-
-  const backgroundMusic =
-    document.getElementById(
-      "backgroundMusic"
-    );
-
-
+  const backgroundMusic = document.getElementById("backgroundMusic");
   if (backgroundMusic) {
-
-    backgroundMusic.play();
-
+    backgroundMusic.volume = 0.5; // Set volume to 50%
+    backgroundMusic.play().then(() => {
+      console.log("Khusela is playing successfully!");
+    }).catch(error => {
+      console.log("Playback failed. Check if the audio file path is correct.", error);
+    });
   }
-
 }
-
-// START ANIMATION
-displayStartScreen();
+// Initialize and Start Simulation Animation Loop
 animate();
