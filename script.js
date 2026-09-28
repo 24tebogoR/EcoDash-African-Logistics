@@ -751,7 +751,7 @@ function playMusic() {
   if (backgroundMusic) {
     backgroundMusic.volume = 0.5; // Set volume to 50%
     backgroundMusic.play().then(() => {
-      console.log("Khusela is playing successfully!");
+      console.log("Khanya is playing successfully!");
     }).catch(error => {
       console.log("Playback failed. Check if the audio file path is correct.", error);
     });
