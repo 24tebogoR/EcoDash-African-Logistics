@@ -44,3 +44,14 @@ The project therefore connects three real-world ideas: rural water delivery, tra
    Different obstacles then affect the vehicle differently: a pothole reduces speed speed, a fallen tree can block the route and
    a river reduces vehicle movement.
 
+   # Installation/Setup Instructions
+1. Download or clone the repository: https://github.com/24tebogoR/EcoDash-African-Logistics.git 
+2. Open the project folder and download
+3. Run Website - Open index.html
+4. Use the Simulation
+- Click start game
+- use the arrow keys to control the water-delivery
+-deliver water to households
+-avoid pothole, fallen tree and river
+-visit solar energy grid to recharge
+
