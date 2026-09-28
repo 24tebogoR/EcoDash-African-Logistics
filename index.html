@@ -2,152 +2,115 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>AquaLink - Rural Water Delivery Simulator</title>
-
     <link rel="stylesheet" href="style.css" />
   </head>
-
   <body>
-    <!-- Header -->
+    <!-- Header Section -->
     <header>
-      <div class="logo">AquaLink</div>
-
+      <h1>AquaLink</h1>
       <p>Rural Water Delivery Simulator</p>
     </header>
 
-    <!-- Main Content -->
-    <main>
-      <section class="intro">
-        <h1>AquaLink</h1>
+    <!-- Mission / Introduction Section -->
+    <section class="intro">
+      <h2>Water Delivery Mission</h2>
+      <p>
+        AquaLink is an interactive JavaScript simulation representing water
+        delivery in a rural South African environment.
+      </p>
+      <p>
+        Drive the electric water vehicle, deliver water to three rural
+        households and manage your battery energy.
+      </p>
+    </section>
 
-        <h2>Delivering Water. Connecting Communities.</h2>
+    <!-- Simulation Section with Controls and Canvas -->
+    <section class="game-section">
+      <h2>Simulation</h2>
+      <div class="game-controls">
+        <button id="startButton" onclick="startGame()">START GAME</button>
+        <button id="pauseButton" onclick="pauseGame()" style="display: none">
+          PAUSE
+        </button>
+        <button
+          id="restartButton"
+          onclick="restartGame()"
+          style="display: none"
+        >
+          RESTART
+        </button>
+      </div>
 
+      <!-- Simulation Canvas Container -->
+      <div class="simulation-container">
+        <canvas></canvas>
+      </div>
+
+      <!-- Vehicle Keyboard Controls Guide -->
+      <div class="controls-info">
+        <h3>Vehicle Controls</h3>
+        <div class="key-row">
+          <span class="key">↑</span>
+          <p>Move Forward / Up</p>
+        </div>
+        <div class="key-row">
+          <span class="key">↓</span>
+          <p>Move Backward / Down</p>
+        </div>
+        <div class="key-row">
+          <span class="key">←</span>
+          <p>Move Left</p>
+        </div>
+        <div class="key-row">
+          <span class="key">→</span>
+          <p>Move Right</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Game Information Cards -->
+    <section class="information">
+      <div class="info-card">
+        <h3>Water Delivery</h3>
+        <p>Reach the rural households to complete water deliveries.</p>
+      </div>
+      <div class="info-card">
+        <h3>Battery Management</h3>
         <p>
-          Navigate a rural South African environment and deliver water while
-          managing battery energy and road conditions.
+          Monitor the vehicle battery and visit the Solar Energy Grid to
+          recharge.
         </p>
-      </section>
+      </div>
+      <div class="info-card">
+        <h3>Route Planning</h3>
+        <p>
+          Potholes, fallen trees and rivers block certain routes. Use alternate
+          roads.
+        </p>
+      </div>
+    </section>
 
-      <!-- Game Section -->
-      <section class="simulation-container">
-        <div class="simulation-heading">
-          <h2>Water Delivery Simulation</h2>
+    <!-- Simulation Audio Controls -->
+    <section class="audio-controls">
+      <h2>Simulation Audio</h2>
+      <p>Background music can be played while using the simulation.</p>
+      <button onclick="playMusic()">Play Music</button>
+    </section>
 
-          <p>Use the arrow keys to control the AquaLink vehicle.</p>
-        </div>
-
-        <!-- Game Controls -->
-        <div class="game-controls">
-          <button id="startButton" onclick="startGame()">START GAME</button>
-
-          <button id="pauseButton" onclick="pauseGame()" style="display: none">
-            PAUSE
-          </button>
-
-          <button
-            id="restartButton"
-            onclick="restartGame()"
-            style="display: none"
-          >
-            RESTART
-          </button>
-        </div>
-
-        <!-- Canvas -->
-        <div class="canvas">
-          <canvas id="gameCanvas" width="900" height="500"> </canvas>
-        </div>
-
-        <!-- Instructions -->
-        <div class="instructions">
-          <h3>Controls</h3>
-
-          <div class="control-grid">
-            <div class="control-box">
-              <strong>↑</strong>
-              <span>Move Up</span>
-            </div>
-
-            <div class="control-box">
-              <strong>↓</strong>
-              <span>Move Down</span>
-            </div>
-
-            <div class="control-box">
-              <strong>←</strong>
-              <span>Move Left</span>
-            </div>
-
-            <div class="control-box">
-              <strong>→</strong>
-              <span>Move Right</span>
-            </div>
-          </div>
-
-          <p>
-            Avoid obstacles, manage your battery and use the Solar Energy Grid
-            to recharge.
-          </p>
-        </div>
-      </section>
-
-      <!-- Environment Info -->
-      <section class="environment-info">
-        <div class="info-card">
-          <h3>Water Delivery</h3>
-
-          <p>
-            AquaLink simulates the delivery of water to rural communities using
-            an electric vehicle.
-          </p>
-        </div>
-
-        <div class="info-card">
-          <h3>Solar Energy</h3>
-
-          <p>
-            Solar infrastructure provides an opportunity to recharge the vehicle
-            during the journey.
-          </p>
-        </div>
-
-        <div class="info-card">
-          <h3>Rural Roads</h3>
-
-          <p>
-            Different road conditions create challenges for the water-delivery
-            vehicle.
-          </p>
-        </div>
-      </section>
-
-      <!-- Audio Sec -->
-      <section class="audio-section">
-        <h2>Simulation Audio</h2>
-
-        <p>Use the button below to start the background music.</p>
-
-        <button class="audio-button" onclick="playMusic()">▶ Play Music</button>
-      </section>
-    </main>
-
-    <!-- Footer -->
-    <footer>
-      <p>AquaLink &copy; 2026</p>
-
-      <p>Rural Water Delivery Simulator</p>
-    </footer>
-
-    <!-- Background Music Create -->
-    <audio id="backgroundMusic" loop>
-      <source src="audio/background-music.mp3" type="audio/mpeg" />
-
-      Your browser does not support audio.
+    <!-- Background Audio Element -->
+    <audio id="backgroundMusic" src="Khanya.mp3" preload="auto" loop>
+     
     </audio>
 
+    <!-- Footer Section -->
+    <footer>
+      <p>AquaLink | Rural Water Delivery Simulator</p>
+      <p>Interactive JavaScript Simulation</p>
+    </footer>
+
+    <!-- JavaScript File Link -->
     <script src="script.js"></script>
   </body>
 </html>
