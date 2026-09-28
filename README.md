@@ -50,8 +50,10 @@ The project therefore connects three real-world ideas: rural water delivery, tra
 - Run Website - Open index.html
 - Use the Simulation
 - Click start game
-- use the arrow keys to control the water-delivery
--deliver water to households
--avoid pothole, fallen tree and river
--visit solar energy grid to recharge
+- Use the arrow keys to control the water-delivery
+- Deliver water to households
+- Avoid pothole, fallen tree and river
+- Visit solar energy grid to recharge
+- Website Link: https://24tebogor.github.io/EcoDash-African-Logistics/ 
+
 
